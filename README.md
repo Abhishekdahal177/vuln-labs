@@ -2,16 +2,6 @@
 
 ---
 
-## SETUP
-
-```bash
-cd ~/examprep
-docker-compose up -d --build
-# Wait 40 seconds
-```
-
----
-
 ## LAB OVERVIEW
 
 | Lab | Site | Web | SSH Port | SSH User | Difficulty | Unique Twist |
