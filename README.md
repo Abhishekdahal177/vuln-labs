@@ -5,9 +5,9 @@
 - Docker Compose
 
 ## Setup
-git clone https://github.com/Abhishekdahal177/vuln-labs.git
-cd vuln-labs
-docker-compose up -d --build
+- git clone https://github.com/Abhishekdahal177/vuln-labs.git
+- cd vuln-labs
+- docker-compose up -d --build
 # Wait ~40 seconds for DBs to initialize
 ---
 
