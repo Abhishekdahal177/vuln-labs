@@ -1,0 +1,27 @@
+FROM ubuntu:22.04
+RUN apt-get update && apt-get install -y openssh-server && mkdir /var/run/sshd
+
+RUN useradd -m -s /bin/bash auctioneer && \
+    useradd -m -s /bin/false svc_mailer && \
+    useradd -m -s /bin/false dbworker
+
+RUN mkdir -p /home/auctioneer/.ssh && \
+    ssh-keygen -t rsa -b 2048 -f /home/auctioneer/.ssh/id_rsa -N "" && \
+    cp /home/auctioneer/.ssh/id_rsa.pub /home/auctioneer/.ssh/authorized_keys && \
+    chmod 700 /home/auctioneer/.ssh && \
+    chmod 600 /home/auctioneer/.ssh/id_rsa /home/auctioneer/.ssh/authorized_keys && \
+    chown -R auctioneer:auctioneer /home/auctioneer/.ssh
+
+RUN echo 'FLAG3{auct10n_ssh_pwn3d_base64_lf1_chain}' > /home/auctioneer/flag3.txt && \
+    chown auctioneer:auctioneer /home/auctioneer/flag3.txt && chmod 600 /home/auctioneer/flag3.txt
+
+RUN mkdir -p /var/www/html/res/private && \
+    cp /home/auctioneer/.ssh/id_rsa /var/www/html/res/private/.auc_key && \
+    chmod 644 /var/www/html/res/private/.auc_key
+
+RUN echo 'PermitRootLogin no' >> /etc/ssh/sshd_config && \
+    echo 'PubkeyAuthentication yes' >> /etc/ssh/sshd_config && \
+    echo 'PasswordAuthentication no' >> /etc/ssh/sshd_config
+
+EXPOSE 22
+CMD ["/usr/sbin/sshd", "-D"]

@@ -1,0 +1,163 @@
+version: '3.8'
+
+services:
+
+  # LAB ALPHA — TravelHub (port 9001 web, 3331 ssh)
+  # Chain: UNION SQLi in search → admin login → flag1 in dashboard
+  #        → LFI in "template" param renders config.php → flag2
+  #        → /etc/passwd visible → SSH key in source → flag3
+  alpha_db:
+    image: mysql:8.0
+    container_name: examprep_alpha_db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: travelhub_db
+    volumes:
+      - ./lab_alpha/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks: [examnet]
+
+  alpha_web:
+    build:
+      context: ./lab_alpha
+      dockerfile: Dockerfile.web
+    container_name: examprep_alpha_web
+    depends_on: [alpha_db]
+    ports: ["9001:80"]
+    networks: [examnet]
+
+  alpha_ssh:
+    build:
+      context: ./lab_alpha
+      dockerfile: Dockerfile.ssh
+    container_name: examprep_alpha_ssh
+    ports: ["3331:22"]
+    networks: [examnet]
+
+  # LAB BETA — AuctionSite (port 9002 web, 3332 ssh)
+  # Chain: UNION SQLi on item page (integer) → creds → login → flag1
+  #        → LFI via "view" param, blocked .php - must use php://filter base64 → flag2
+  #        → /etc/passwd → SSH key via LFI → flag3
+  beta_db:
+    image: mysql:8.0
+    container_name: examprep_beta_db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: auction_db
+    volumes:
+      - ./lab_beta/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks: [examnet]
+
+  beta_web:
+    build:
+      context: ./lab_beta
+      dockerfile: Dockerfile.web
+    container_name: examprep_beta_web
+    depends_on: [beta_db]
+    ports: ["9002:80"]
+    networks: [examnet]
+
+  beta_ssh:
+    build:
+      context: ./lab_beta
+      dockerfile: Dockerfile.ssh
+    container_name: examprep_beta_ssh
+    ports: ["3332:22"]
+    networks: [examnet]
+
+  # LAB GAMMA — FoodOrder (port 9003 web, 3333 ssh)
+  # Chain: UNION SQLi in category (string) → dump creds → login → flag1
+  #        → Path traversal in "file" param (../../) → reads /etc/passwd
+  #        → LFI on config.php via traversal → flag2
+  #        → DB creds in config.php → SSH with password (no key needed) → flag3
+  gamma_db:
+    image: mysql:8.0
+    container_name: examprep_gamma_db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: foodorder_db
+    volumes:
+      - ./lab_gamma/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks: [examnet]
+
+  gamma_web:
+    build:
+      context: ./lab_gamma
+      dockerfile: Dockerfile.web
+    container_name: examprep_gamma_web
+    depends_on: [gamma_db]
+    ports: ["9003:80"]
+    networks: [examnet]
+
+  gamma_ssh:
+    build:
+      context: ./lab_gamma
+      dockerfile: Dockerfile.ssh
+    container_name: examprep_gamma_ssh
+    ports: ["3333:22"]
+    networks: [examnet]
+
+  # LAB DELTA — CloudStore (port 9004 web, 3334 ssh)
+  # Chain: Login page — AND bracket bypass → flag1
+  #        → LFI in "page" param — index.php readable directly → DB creds visible
+  #        → UNION SQLi using those DB creds hints → SSH user/pass in DB → flag2+3
+  delta_db:
+    image: mysql:8.0
+    container_name: examprep_delta_db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: cloudstore_db
+    volumes:
+      - ./lab_delta/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks: [examnet]
+
+  delta_web:
+    build:
+      context: ./lab_delta
+      dockerfile: Dockerfile.web
+    container_name: examprep_delta_web
+    depends_on: [delta_db]
+    ports: ["9004:80"]
+    networks: [examnet]
+
+  delta_ssh:
+    build:
+      context: ./lab_delta
+      dockerfile: Dockerfile.ssh
+    container_name: examprep_delta_ssh
+    ports: ["3334:22"]
+    networks: [examnet]
+
+  # LAB EPSILON — ResearchPortal (port 9005 web, 3335 ssh)
+  # Chain: UNION SQLi in search (slug based, string) → creds → login → flag1
+  #        → LFI via "doc" param — index.php blocked, MUST use base64 wrapper → flag2
+  #        → SSH key also base64 encoded in DB, must decode → flag3
+  epsilon_db:
+    image: mysql:8.0
+    container_name: examprep_epsilon_db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: research_db
+    volumes:
+      - ./lab_epsilon/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks: [examnet]
+
+  epsilon_web:
+    build:
+      context: ./lab_epsilon
+      dockerfile: Dockerfile.web
+    container_name: examprep_epsilon_web
+    depends_on: [epsilon_db]
+    ports: ["9005:80"]
+    networks: [examnet]
+
+  epsilon_ssh:
+    build:
+      context: ./lab_epsilon
+      dockerfile: Dockerfile.ssh
+    container_name: examprep_epsilon_ssh
+    ports: ["3335:22"]
+    networks: [examnet]
+
+networks:
+  examnet:
+    driver: bridge

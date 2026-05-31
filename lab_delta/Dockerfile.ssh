@@ -1,0 +1,26 @@
+FROM ubuntu:22.04
+RUN apt-get update && apt-get install -y openssh-server && mkdir /var/run/sshd
+
+RUN useradd -m -s /bin/bash storekeeper && \
+    useradd -m -s /bin/false svc_sync
+
+RUN mkdir -p /home/storekeeper/.ssh && \
+    ssh-keygen -t rsa -b 2048 -f /home/storekeeper/.ssh/id_rsa -N "" && \
+    cp /home/storekeeper/.ssh/id_rsa.pub /home/storekeeper/.ssh/authorized_keys && \
+    chmod 700 /home/storekeeper/.ssh && \
+    chmod 600 /home/storekeeper/.ssh/id_rsa /home/storekeeper/.ssh/authorized_keys && \
+    chown -R storekeeper:storekeeper /home/storekeeper/.ssh
+
+RUN echo 'FLAG3{cl0udstor3_ssh_via_sqli_creds_dump}' > /home/storekeeper/flag3.txt && \
+    chown storekeeper:storekeeper /home/storekeeper/flag3.txt && chmod 600 /home/storekeeper/flag3.txt
+
+RUN mkdir -p /var/www/html/.hidden && \
+    cp /home/storekeeper/.ssh/id_rsa /var/www/html/.hidden/.sk_rsa && \
+    chmod 644 /var/www/html/.hidden/.sk_rsa
+
+RUN echo 'PermitRootLogin no' >> /etc/ssh/sshd_config && \
+    echo 'PubkeyAuthentication yes' >> /etc/ssh/sshd_config && \
+    echo 'PasswordAuthentication no' >> /etc/ssh/sshd_config
+
+EXPOSE 22
+CMD ["/usr/sbin/sshd", "-D"]

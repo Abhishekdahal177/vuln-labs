@@ -1,0 +1,21 @@
+FROM ubuntu:22.04
+RUN apt-get update && apt-get install -y openssh-server && mkdir /var/run/sshd
+
+RUN useradd -m -s /bin/bash chef && \
+    useradd -m -s /bin/false delivery_bot && \
+    useradd -m -s /bin/false payment_svc
+
+# Password auth — password visible in config.php via path traversal
+RUN echo 'chef:Ch3fM4ster$Kitchen99' | chpasswd
+
+RUN echo 'FLAG3{f00d_0rd3r_ssh_p4ssw0rd_fr0m_c0nfig}' > /home/chef/flag3.txt && \
+    chown chef:chef /home/chef/flag3.txt && chmod 600 /home/chef/flag3.txt
+
+# Enable password auth
+RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
+    sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
+    echo 'PasswordAuthentication yes' >> /etc/ssh/sshd_config && \
+    echo 'PermitRootLogin no' >> /etc/ssh/sshd_config
+
+EXPOSE 22
+CMD ["/usr/sbin/sshd", "-D"]

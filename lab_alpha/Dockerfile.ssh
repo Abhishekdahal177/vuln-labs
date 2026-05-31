@@ -1,0 +1,28 @@
+FROM ubuntu:22.04
+RUN apt-get update && apt-get install -y openssh-server && mkdir /var/run/sshd
+
+RUN useradd -m -s /bin/bash traveler && \
+    useradd -m -s /bin/false svc_cron && \
+    useradd -m -s /bin/false backup_bot
+
+RUN mkdir -p /home/traveler/.ssh && \
+    ssh-keygen -t rsa -b 2048 -f /home/traveler/.ssh/id_rsa -N "" && \
+    cp /home/traveler/.ssh/id_rsa.pub /home/traveler/.ssh/authorized_keys && \
+    chmod 700 /home/traveler/.ssh && \
+    chmod 600 /home/traveler/.ssh/id_rsa /home/traveler/.ssh/authorized_keys && \
+    chown -R traveler:traveler /home/traveler/.ssh
+
+RUN echo 'FLAG3{tr4vel_hub_ssh_0wn3d_via_LF1_k3y}' > /home/traveler/flag3.txt && \
+    chown traveler:traveler /home/traveler/flag3.txt && chmod 600 /home/traveler/flag3.txt
+
+# Key exposed via LFI on web
+RUN mkdir -p /var/www/html/storage/keys && \
+    cp /home/traveler/.ssh/id_rsa /var/www/html/storage/keys/.traveler_id && \
+    chmod 644 /var/www/html/storage/keys/.traveler_id
+
+RUN echo 'PermitRootLogin no' >> /etc/ssh/sshd_config && \
+    echo 'PubkeyAuthentication yes' >> /etc/ssh/sshd_config && \
+    echo 'PasswordAuthentication no' >> /etc/ssh/sshd_config
+
+EXPOSE 22
+CMD ["/usr/sbin/sshd", "-D"]

@@ -1,0 +1,6 @@
+*.log
+.env
+**/storage/keys/
+**/res/private/
+**/secure/
+**/hidden/

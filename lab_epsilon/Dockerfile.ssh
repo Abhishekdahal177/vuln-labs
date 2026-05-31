@@ -1,0 +1,29 @@
+FROM ubuntu:22.04
+RUN apt-get update && apt-get install -y openssh-server && mkdir /var/run/sshd
+
+RUN useradd -m -s /bin/bash researcher && \
+    useradd -m -s /bin/false databot && \
+    useradd -m -s /bin/false svc_api
+
+RUN mkdir -p /home/researcher/.ssh && \
+    ssh-keygen -t rsa -b 2048 -f /home/researcher/.ssh/id_rsa -N "" && \
+    cp /home/researcher/.ssh/id_rsa.pub /home/researcher/.ssh/authorized_keys && \
+    chmod 700 /home/researcher/.ssh && \
+    chmod 600 /home/researcher/.ssh/id_rsa /home/researcher/.ssh/authorized_keys && \
+    chown -R researcher:researcher /home/researcher/.ssh
+
+RUN echo 'FLAG3{r3s34rch_p0rt4l_ssh_base64_k3y_ch41n}' > /home/researcher/flag3.txt && \
+    chown researcher:researcher /home/researcher/flag3.txt && chmod 600 /home/researcher/flag3.txt
+
+# Key stored as PHP file (must use base64 filter to read it)
+RUN mkdir -p /var/www/html/secure && \
+    printf '<?php\n// SSH Private Key — DO NOT EXPOSE\n$key = file_get_contents("/home/researcher/.ssh/id_rsa");\n?>' > /var/www/html/secure/keystore.php && \
+    cp /home/researcher/.ssh/id_rsa /var/www/html/secure/.raw_key && \
+    chmod 644 /var/www/html/secure/keystore.php /var/www/html/secure/.raw_key
+
+RUN echo 'PermitRootLogin no' >> /etc/ssh/sshd_config && \
+    echo 'PubkeyAuthentication yes' >> /etc/ssh/sshd_config && \
+    echo 'PasswordAuthentication no' >> /etc/ssh/sshd_config
+
+EXPOSE 22
+CMD ["/usr/sbin/sshd", "-D"]
