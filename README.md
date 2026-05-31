@@ -1,5 +1,14 @@
 #LAB PRACTICE OF SQL INJECTION AND LFI. 
 
+## Requirements
+- Docker
+- Docker Compose
+
+## Setup
+git clone https://github.com/Abhishekdahal177/vuln-labs.git
+cd vuln-labs
+docker-compose up -d --build
+# Wait ~40 seconds for DBs to initialize
 ---
 
 ## LAB OVERVIEW
